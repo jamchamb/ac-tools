@@ -7,10 +7,31 @@ TABLE_ENT_SZ = 4
 
 
 SPECIAL_CODES = {
-    '$': 'PLAYER_NAME',
-    ';': 'PLAYER_TOWN',
-    '%': 'NPC_NAME',
-    ':': 'NPC_TOWN',
+    '\x02': 'NEXT_PAGE',
+    #0x03: PAUSE
+    '\x04': 'CONTINUE',
+    #0x09: ANIMATION
+
+    '\x28': 'MEMSLOT',
+
+    '\x1c': 'NICKNAME',
+
+    '\x1d': 'YEAR',
+    '\x1e': 'MONTH',
+    '\x1f': 'WEEKDAY',
+    '\x20': 'DAY',
+    '\x21': 'HOUR',
+    '\x22': 'MINUTE',
+    '\x23': 'SECOND',
+    '\x76': 'AMPM',
+
+    '\x24': 'PLAYER_NAME',
+    '\x25': 'NPC_NAME',
+    '\x2f': 'TOWN',
+    '\x3a': 'NPC_TOWN',
+    '\x3b': 'PLAYER_TOWN',
+
+    #0x50 COLOR
 }
 
 
@@ -26,13 +47,32 @@ def decode_message(message):
         # Check for special meta-chars
         if message[i] == '\x7f':
             special = message[i+1]
+            special_len = 2
+
             if special in SPECIAL_CODES:
                 special = SPECIAL_CODES[special]
 
-            message = '%s[%s]%s' % (message[:i], special, message[i+2:])
+            # PAUSE
+            elif special == '\x03':
+                special = 'PAUSE:0x%02x' % (ord(message[i+1]))
+                special_len = 3
+
+            # ANIMATION
+            elif special == '\x09':
+                special_len = 5
+                anim = struct.unpack('>I', message[i+1:i+1+4])[0] - 0x09000000
+                special = 'ANIM:0x%02x' % (anim)
+
+            # COLOR
+            elif special == '\x50':
+                special_len = 6
+                color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
+                special = 'COLOR:%06x:%02x' % (color, struct.unpack('>B', message[i+2+3])[0])
+
+            message = '%s[%s]%s' % (message[:i], special, message[i+special_len:])
 
             # Adjust message length and position
-            msg_len += len(special)
+            msg_len = len(message)
             i += len(special) + 2
             continue
 
