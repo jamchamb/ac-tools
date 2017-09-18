@@ -7,14 +7,24 @@ TABLE_ENT_SZ = 4
 
 
 SPECIAL_CODES = {
+    '\x00': 'CLOSE',
+    '\x01': 'END',
     '\x02': 'NEXT_PAGE',
-    #0x03: PAUSE
+    # 0x03: PAUSE
     '\x04': 'CONTINUE',
-    #0x09: ANIMATION
+    # 0x09: ANIMATION
+    '\x0d': '0x0D',
+    # 0x0e: GOTO_MESSAGE
+    # 0x0f - 0x12 OPTIONS
 
-    '\x28': 'MEMSLOT',
+    '\x27': 'ACRE-LTR',
+    '\x28': 'MEMSLOT/ACRE-NUM',
+    '\x29': 'TARGET_NPC',
 
-    '\x1c': 'NICKNAME',
+    '\x2e': 'CHOICE',
+
+    '\x1a': 'PLAYER_NAME1',
+    '\x1c': 'PHRASE',
 
     '\x1d': 'YEAR',
     '\x1e': 'MONTH',
@@ -25,13 +35,15 @@ SPECIAL_CODES = {
     '\x23': 'SECOND',
     '\x76': 'AMPM',
 
-    '\x24': 'PLAYER_NAME',
+    # also used for # of bells, could be generic variable insert
+    '\x24': 'PLAYER_NAME2',
     '\x25': 'NPC_NAME',
     '\x2f': 'TOWN',
     '\x3a': 'NPC_TOWN',
     '\x3b': 'PLAYER_TOWN',
 
     #0x50 COLOR
+    '\x5b': 'SHOW_SPECIAL',
 }
 
 
@@ -60,14 +72,44 @@ def decode_message(message):
             # ANIMATION
             elif special == '\x09':
                 special_len = 5
-                anim = struct.unpack('>I', message[i+1:i+1+4])[0] - 0x09000000
+                anim = struct.unpack('>L', '\x00'+message[i+2:i+2+3])[0]
                 special = 'ANIM:0x%02x' % (anim)
 
-            # COLOR
+            # GOTO
+            elif special == '\x0e':
+                special_len = 4
+                target = struct.unpack('>H', message[i+2:i+2+2])[0]
+                special = 'GOTO:0x%04x' % (target)
+
+            # OPTION TRANSITIONS
+            elif ord(special) >= 0x0f and ord(special) <= 0x12:
+                special_len = 4
+                index = ord(special) - 0x0f + 1
+                target = struct.unpack('>H', message[i+2:i+2+2])[0]
+                special = 'OPT%u:0x%04x' % (index, target)
+
+            # CHOICES
+            elif ord(special) >= 0x16 and ord(special) <= 0x18:
+                count = ord(special) - 0x14
+
+                special_len = 2 + (2 * count)
+                choices = struct.unpack('>' + 'H'*count, message[i+2:i+2+(2 * count)])
+                special = 'CHOICES:'
+                for choice in choices:
+                    special += '%04x,' % (choice)
+
+            # COLOR (WHOLE LINE)
+            elif special == '\x05':
+                special_len = 5
+                color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
+                special = 'COLOR:%06x' % (color)
+
+            # COLOR (LENGTH)
             elif special == '\x50':
                 special_len = 6
                 color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
-                special = 'COLOR:%06x:%02x' % (color, struct.unpack('>B', message[i+2+3])[0])
+                length =  struct.unpack('>B', message[i+2+3])[0]
+                special = 'COLOR:%06x:%02x' % (color, length)
 
             message = '%s[%s]%s' % (message[:i], special, message[i+special_len:])
 
@@ -127,9 +169,11 @@ def main():
 
     entries = get_entries(data, table)
 
+    index = 0
     for start, message in entries:
-        print '0x%08x:' % (start)
+        print '#0x%04x @ 0x%08x:' % (index, start)
         print '%s\n' % (decode_message(message))
+        index += 1
 
 
 if __name__ == '__main__':
