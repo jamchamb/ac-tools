@@ -50,6 +50,14 @@ SPECIAL_CODES = {
 def decode_message(message):
     '''Translate special values in an AC message'''
 
+    if len(message) < 1:
+        return message
+
+    # Check for empty end entry
+    if message[0] == '\x00':
+        if len(set([c for c in message])) == 1:
+            return '[%u FREE BYTES]' % (len(message))
+
     # 0xCD: newline
     message = message.replace('\xcd', '\n')
 
@@ -126,6 +134,7 @@ def decode_message(message):
 
 
 def get_entries(data, table):
+    '''Return array of (addr, entry) from data file and table file'''
     entries = [0]
 
     index = 0
