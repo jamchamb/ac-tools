@@ -162,10 +162,68 @@ def get_entries(data, table):
     return entries
 
 
+def list_entries(entries):
+    index = 0
+    for start, message in entries:
+        print '#0x%04x @ 0x%08x:' % (index, start)
+        print '%s\n' % (decode_message(message))
+        index += 1
+
+
+def edit_entries(entries):
+    '''Edit string table'''
+
+    prompt = 'choose entry 0x00 through 0x%04x (s <text> to search, q to quit): ' % \
+             (len(entries))
+
+    print prompt
+
+    choice = None
+    while True:
+        if choice is not None:
+            print prompt
+
+        choice = raw_input()
+
+        # handle search terms
+        if len(choice) > 0 and choice[0] == 's':
+            if choice[1] == ' ':
+                terms = choice[2:]
+            else:
+                terms = choice[1:]
+
+            for idx, entry in enumerate(entries):
+                if terms.lower() in entry[1].lower():
+                    print '#0x%04x: %s' % (idx, escape_string(entry[1][:20]))
+            continue
+        elif choice.lower() == 'q':
+            break
+
+        # handle index choice
+        choice = int(choice, 16)
+        if choice < 0 or choice > (len(entries) - 1):
+            print 'invalid choice'
+            continue
+
+        message = entries[choice][1]
+
+        print '#0x%04x: %s' % (choice, escape_string(message))
+        print 'decoded:\n%s' % (decode_message(message))
+
+        print 'new value:'
+        new_entry = raw_input()
+        print 'Changed to "%s"' % (new_entry)
+        entries[choice] = (entries[choice][0], new_entry)
+
+    return entries
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('data', type=str)
     parser.add_argument('table', type=str)
+    parser.add_argument('--editor', action='store_true')
+    parser.add_argument('--output', type=str, help='base of output filenames')
     args = parser.parse_args()
 
     dataf = open(args.data, 'rb')
@@ -178,11 +236,43 @@ def main():
 
     entries = get_entries(data, table)
 
-    index = 0
-    for start, message in entries:
-        print '#0x%04x @ 0x%08x:' % (index, start)
-        print '%s\n' % (decode_message(message))
-        index += 1
+    if args.editor:
+        edited_entries = edit_entries(entries)
+        data_out_filename = args.output + '_data.bin'
+        table_out_filename = args.output + '_data_table.bin'
+
+        data_out_file = open(data_out_filename, 'wb')
+        table_out_file = open(table_out_filename, 'wb')
+
+        cur_pos = 0
+        for idx, entry in enumerate(edited_entries):
+            message = entry[1]
+            cur_pos += len(message)
+
+            table_bytes = struct.pack('>I', cur_pos)
+
+            # Handle zero pad entry at the end
+            if idx == len(entries) - 1:
+                orig_pad_len = len(message)
+
+                orig_size = len(data)
+                new_size = cur_pos
+                size_diff = new_size - orig_size
+
+                new_pad_len = orig_pad_len + size_diff
+
+                if new_pad_len < 0:
+                    print 'Invalid padding length %d' % (new_pad_len)
+                    break
+
+                message = '\x00' * new_pad_len
+            # Don't add a table entry after the zero pad
+            else:
+                table_out_file.write(table_bytes)
+
+            data_out_file.write(message)
+    else:
+        list_entries(entries)
 
 
 if __name__ == '__main__':
