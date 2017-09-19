@@ -284,7 +284,7 @@ def main():
 
         data_out_file.close()
 
-        # TODO Zero padding
+        # Table zero padding
         table_pad_amount = len(table) - table_pos
         table_padding = '\x00' * (table_pad_amount)
         print 'padding table with %u bytes' % (table_pad_amount)
