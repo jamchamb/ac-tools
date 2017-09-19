@@ -245,6 +245,8 @@ def main():
         table_out_file = open(table_out_filename, 'wb')
 
         cur_pos = 0
+        table_pos = 0
+
         for idx, entry in enumerate(edited_entries):
             message = entry[1]
             cur_pos += len(message)
@@ -257,7 +259,14 @@ def main():
 
                 orig_size = len(data)
                 new_size = cur_pos
-                size_diff = new_size - orig_size
+                size_diff = orig_size - new_size
+
+                if size_diff > 0:
+                    print 'adding %u bytes to data zero pad' % (size_diff)
+                elif size_diff < 0:
+                    print 'removing %u bytes from data zero pad' % (-size_diff)
+                else:
+                    print 'zero pad unchanged'
 
                 new_pad_len = orig_pad_len + size_diff
 
@@ -269,8 +278,18 @@ def main():
             # Don't add a table entry after the zero pad
             else:
                 table_out_file.write(table_bytes)
+                table_pos += TABLE_ENT_SZ
 
             data_out_file.write(message)
+
+        data_out_file.close()
+
+        # TODO Zero padding
+        table_pad_amount = len(table) - table_pos
+        table_padding = '\x00' * (table_pad_amount)
+        print 'padding table with %u bytes' % (table_pad_amount)
+        table_out_file.write(table_padding)
+        table_out_file.close()
     else:
         list_entries(entries)
 
