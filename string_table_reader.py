@@ -3,8 +3,7 @@ import argparse
 import struct
 from utils import escape_string
 
-TABLE_ENT_SZ = 4
-
+TABLE_ENT_STRUCT = struct.Struct('>I')
 
 SPECIAL_CODES = {
     '\x00': 'LAST',
@@ -171,7 +170,7 @@ def decode_message(message):
             # PAUSE
             elif special == '\x03':
                 special_len = 3
-                special = 'PAUSE:0x%02x' % (ord(message[i+1]))
+                special = 'PAUSE:0x%02x' % (ord(message[i+2]))
 
             # ANIMATION
             elif special == '\x09':
@@ -231,14 +230,15 @@ def decode_message(message):
 
 def get_entries(data, table):
     '''Return array of (addr, entry) from data file and table file'''
+
+    # The table is more like a table of ending positions, so we start
+    # with an implicit entry at position 0
     entries = [0]
 
-    index = 0
     pos = 0
     while pos < len(table):
-        start = struct.unpack('>I', table[pos:pos+TABLE_ENT_SZ])[0]
-        pos += TABLE_ENT_SZ
-        index += 1
+        start = TABLE_ENT_STRUCT.unpack_from(table, offset=pos)[0]
+        pos += TABLE_ENT_STRUCT.size
 
         if start == 0:
             break
@@ -352,7 +352,7 @@ def main():
             message = entry[1]
             cur_pos += len(message)
 
-            table_bytes = struct.pack('>I', cur_pos)
+            table_bytes = TABLE_ENT_STRUCT.pack(cur_pos)
 
             # Handle zero pad entry at the end
             if idx == len(entries) - 1:
@@ -379,7 +379,7 @@ def main():
             # Don't add a table entry after the zero pad
             else:
                 table_out_file.write(table_bytes)
-                table_pos += TABLE_ENT_SZ
+                table_pos += TABLE_ENT_STRUCT.size
 
             data_out_file.write(message)
 
@@ -389,6 +389,7 @@ def main():
         table_pad_amount = len(table) - table_pos
         table_padding = '\x00' * (table_pad_amount)
         print 'padding table with %u bytes' % (table_pad_amount)
+
         table_out_file.write(table_padding)
         table_out_file.close()
     else:
