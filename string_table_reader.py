@@ -7,25 +7,31 @@ TABLE_ENT_SZ = 4
 
 
 SPECIAL_CODES = {
-    '\x00': 'CLOSE',
-    '\x01': 'END',
-    '\x02': 'NEXT_PAGE',
-    # 0x03: PAUSE
-    '\x04': 'CONTINUE',
-    # 0x09: ANIMATION
-    '\x0d': '0x0D',
-    # 0x0e: GOTO_MESSAGE
-    # 0x0f - 0x12 OPTIONS
+    '\x00': 'LAST',
+    '\x01': 'CONTINUE',
+    '\x02': 'CLEAR',
+    # 0x03: PAUSE (aka SetTime)
+    '\x04': 'BUTTON',
+    # 0x05: Color (whole line)
+    # 0x06: AbleCancel
+    # 0x07: UnableCancel
+    # 0x08: SetDemoOrderPlayer
 
-    '\x27': 'ACRE-LTR',
-    '\x28': 'MEMSLOT/ACRE-NUM',
-    '\x29': 'TARGET_NPC',
+    # 0x09: ANIMATION (aka SetDemoOrderNpc0)
+    # 0x0A: SetDemoOrderNpc1
+    # 0x0B: SetDemoOrderNpc2
+    # 0x0C: SetDemoOrderNpc3
 
-    '\x2e': 'CHOICE',
+    '\x0d': 'SELECT',  # aka SetSelectWindow
+    # 0x0e: GOTO_MESSAGE aka SetNextMessageF
+    # 0x0f - 0x12 OPTIONS, aka SetNextMessage(0 through 3)
+    # 0x13 - 0x15: SetNextMessageRandom(2 through 4)
+    # 0x16 - 0x18: SetSelectString(2 through 4)
+    # 0x19: SetForceNext
 
-    '\x1a': 'PLAYER_NAME1',
-    '\x1c': 'PHRASE',
-
+    '\x1a': 'PLAYER_NAME',
+    '\x1b': 'TALK_NAME',
+    '\x1c': 'PHRASE',  # aka "tail"
     '\x1d': 'YEAR',
     '\x1e': 'MONTH',
     '\x1f': 'WEEKDAY',
@@ -33,17 +39,107 @@ SPECIAL_CODES = {
     '\x21': 'HOUR',
     '\x22': 'MINUTE',
     '\x23': 'SECOND',
+
+    # Free string inserts
+    '\x24': 'FREE0',
+    '\x25': 'FREE1',
+    '\x26': 'FREE2',
+    '\x27': 'FREE3',
+    '\x28': 'FREE4',
+    '\x29': 'FREE5',
+    '\x2a': 'FREE6',
+    '\x2b': 'FREE7',
+    '\x2c': 'FREE8',
+    '\x2d': 'FREE9',
+
+    '\x2e': 'CHOICE',  # aka Determination (thing you just chose)
+
+    '\x2f': 'TOWN',  # aka CountryName
+    '\x30': 'RAND_NUM2',  # "RamdomNumber2"
+
+    # Items (0x31 - 0x35)
+    '\x31': 'ITEM0',
+    '\x32': 'ITEM1',
+    '\x33': 'ITEM2',
+    '\x34': 'ITEM3',
+    '\x35': 'ITEM4',
+
+    # More free string inserts
+    '\x36': 'FREE10',
+    '\x37': 'FREE11',
+    '\x38': 'FREE12',
+    '\x39': 'FREE13',
+    '\x3a': 'FREE14',
+    '\x3b': 'FREE15',
+    '\x3c': 'FREE16',
+    '\x3d': 'FREE17',
+    '\x3e': 'FREE18',
+    '\x3f': 'FREE19',
+
+    '\x40': 'MAIL0',
+
+    # "Set Player Destiny" 0 - 9 (0x41 - 0x4A)
+    '\x41': 'DESTINY0',
+    '\x42': 'DESTINY1',
+    '\x43': 'DESTINY2',
+    '\x44': 'DESTINY3',
+    '\x45': 'DESTINY4',
+    '\x46': 'DESTINY5',
+    '\x47': 'DESTINY6',
+    '\x48': 'DESTINY7',
+    '\x49': 'DESTINY8',
+    '\x4a': 'DESTINY9',
+
+    # Set Message Contents <emotion> (0x4B - 0x4F)
+    '\x4b': 'NORMAL',
+    '\x4c': 'ANGRY',
+    '\x4d': 'SAD',
+    '\x4e': 'FUN',
+    '\x4f': 'SLEEPY',
+
+    # 0x50 COLOR aka SetColorChar
+    '\x51': 'SOUND',
+    '\x52': 'LINE_OFFSET',
+    '\x53': 'LINE_TYPE',
+    '\x54': 'CHAR_SCALE',
+    '\x55': 'BUTTON2',
+    '\x56': 'BGM_MAKE',
+    '\x57': 'BGM_DELETE',
+    '\x58': 'MSG_TIME_END',
+    '\x59': 'SOUND_TRG_SYS',
+    '\x5a': 'LINE_SCALE',
+    '\x5b': 'SOUND_NO_PAGE',
+    '\x5c': 'VOICE_TRUE',
+    '\x5d': 'VOICE_FALSE',
+    '\x5e': 'SELECT_NO_B',
+    '\x5f': 'GIVE_OPEN',
+    '\x60': 'GIVE_CLOSE',
+    '\x61': 'GLOOMY',  # SetMessageContentsGloomy
+    '\x62': 'SELECT_NO_B_CLOSE',
+    '\x63': 'NEXT_MSG_RANDOM_SECTION',
+    '\x64': 'AGB_DUMMY1',
+    '\x65': 'AGB_DUMMY2',
+    '\x66': 'AGB_DUMMY3',
+    '\x67': 'SPACE',
+    '\x68': 'AGB_DUMMY4',
+    '\x69': 'AGB_DUMMY5',
+    '\x6a': 'GENDER_CHECK',
+    '\x6b': 'AGB_DUMMY6',
+    '\x6c': 'AGB_DUMMY7',
+    '\x6d': 'AGB_DUMMY8',
+    '\x6e': 'AGB_DUMMY9',
+    '\x6f': 'AGB_DUMMY10',
+    '\x70': 'AGB_DUMMY11',
+    '\x71': 'ISLAND_NAME',
+    '\x72': 'SET_CURSOL_JUST',
+    '\x73': 'CLR_CUSROL_JUST',
+    '\x74': 'CUT_ARTICLE',
+    '\x75': 'CAPITAL',
     '\x76': 'AMPM',
-
-    # also used for # of bells, could be generic variable insert
-    '\x24': 'PLAYER_NAME2',
-    '\x25': 'NPC_NAME',
-    '\x2f': 'TOWN',
-    '\x3a': 'NPC_TOWN',
-    '\x3b': 'PLAYER_TOWN',
-
-    #0x50 COLOR
-    '\x5b': 'SHOW_SPECIAL',
+    '\x77': 'NEXT_MSG4',
+    '\x78': 'NEXT_MSG5',
+    '\x79': 'SELECT_STRING5',
+    '\x7a': 'SELECT_STRING6',
 }
 
 
@@ -74,8 +170,8 @@ def decode_message(message):
 
             # PAUSE
             elif special == '\x03':
-                special = 'PAUSE:0x%02x' % (ord(message[i+1]))
                 special_len = 3
+                special = 'PAUSE:0x%02x' % (ord(message[i+1]))
 
             # ANIMATION
             elif special == '\x09':
@@ -116,7 +212,7 @@ def decode_message(message):
             elif special == '\x50':
                 special_len = 6
                 color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
-                length =  struct.unpack('>B', message[i+2+3])[0]
+                length = struct.unpack('>B', message[i+2+3])[0]
                 special = 'COLOR:%06x:%02x' % (color, length)
 
             message = '%s[%s]%s' % (message[:i], special, message[i+special_len:])
@@ -165,7 +261,7 @@ def get_entries(data, table):
 def list_entries(entries):
     index = 0
     for start, message in entries:
-        print '#0x%04x @ 0x%08x:' % (index, start)
+        print '#0x%04x @ 0x%08x (0x%02x bytes):' % (index, start, len(message))
         print '%s\n' % (decode_message(message))
         index += 1
 
@@ -221,7 +317,7 @@ def edit_entries(entries):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('data', type=str)
-    parser.add_argument('table', type=str)
+    parser.add_argument('--table', type=str)
     parser.add_argument('--editor', action='store_true')
     parser.add_argument('--output', type=str, help='base of output filenames')
     args = parser.parse_args()
@@ -230,7 +326,12 @@ def main():
     data = dataf.read()
     dataf.close()
 
-    tablef = open(args.table, 'rb')
+    if args.table is not None:
+        table_filename = args.table
+    else:
+        table_filename = args.data.replace('_data.bin', '_data_table.bin')
+
+    tablef = open(table_filename, 'rb')
     table = tablef.read()
     tablef.close()
 
