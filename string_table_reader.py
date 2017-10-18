@@ -3,7 +3,8 @@ import argparse
 import struct
 from utils import escape_string
 from cursor_proc import (PauseProc, AnimationProc, GoToProc, NextMsgProc,
-                         SelectStringProc, ColorLineProc, ColorCharProc)
+                         SelectStringProc, ColorLineProc, ColorCharProc,
+                         CharScaleProc, LineScaleProc, SoundTrigProc)
 
 TABLE_ENT_STRUCT = struct.Struct('>I')
 
@@ -34,7 +35,6 @@ SPECIAL_CODES = {
     '\x17': SelectStringProc(3),
     '\x18': SelectStringProc(4),
     '\x19': 'FORCE_NEXT',  # 0x19: SetForceNext
-
     '\x1a': 'PLAYER_NAME',
     '\x1b': 'TALK_NAME',
     '\x1c': 'PHRASE',  # aka "tail"
@@ -45,7 +45,6 @@ SPECIAL_CODES = {
     '\x21': 'HOUR',
     '\x22': 'MINUTE',
     '\x23': 'SECOND',
-
     # Free string inserts
     '\x24': 'FREE0',
     '\x25': 'FREE1',
@@ -57,19 +56,15 @@ SPECIAL_CODES = {
     '\x2b': 'FREE7',
     '\x2c': 'FREE8',
     '\x2d': 'FREE9',
-
     '\x2e': 'CHOICE',  # aka Determination (thing you just chose)
-
     '\x2f': 'TOWN',  # aka CountryName
     '\x30': 'RAND_NUM2',  # "RamdomNumber2"
-
     # Items (0x31 - 0x35)
     '\x31': 'ITEM0',
     '\x32': 'ITEM1',
     '\x33': 'ITEM2',
     '\x34': 'ITEM3',
     '\x35': 'ITEM4',
-
     # More free string inserts
     '\x36': 'FREE10',
     '\x37': 'FREE11',
@@ -81,9 +76,7 @@ SPECIAL_CODES = {
     '\x3d': 'FREE17',
     '\x3e': 'FREE18',
     '\x3f': 'FREE19',
-
     '\x40': 'MAIL0',
-
     # "Set Player Destiny" 0 - 9 (0x41 - 0x4A)
     '\x41': 'DESTINY0',
     '\x42': 'DESTINY1',
@@ -95,25 +88,23 @@ SPECIAL_CODES = {
     '\x48': 'DESTINY7',
     '\x49': 'DESTINY8',
     '\x4a': 'DESTINY9',
-
     # Set Message Contents <emotion> (0x4B - 0x4F)
     '\x4b': 'NORMAL',
     '\x4c': 'ANGRY',
     '\x4d': 'SAD',
     '\x4e': 'FUN',
     '\x4f': 'SLEEPY',
-
     '\x50': ColorCharProc(),  # 0x50 COLOR aka SetColorChar
     '\x51': 'SOUND',
     '\x52': 'LINE_OFFSET',
     '\x53': 'LINE_TYPE',
-    '\x54': 'CHAR_SCALE',
+    '\x54': CharScaleProc(),
     '\x55': 'BUTTON2',
     '\x56': 'BGM_MAKE',
     '\x57': 'BGM_DELETE',
     '\x58': 'MSG_TIME_END',
-    '\x59': 'SOUND_TRG_SYS',
-    '\x5a': 'LINE_SCALE',
+    '\x59': SoundTrigProc(),
+    '\x5a': LineScaleProc(),
     '\x5b': 'SOUND_NO_PAGE',
     '\x5c': 'VOICE_TRUE',
     '\x5d': 'VOICE_FALSE',
@@ -142,10 +133,10 @@ SPECIAL_CODES = {
     '\x74': 'CUT_ARTICLE',
     '\x75': 'CAPITAL',
     '\x76': 'AMPM',
-    '\x77': 'NEXT_MSG4',
-    '\x78': 'NEXT_MSG5',
-    '\x79': 'SELECT_STRING5',
-    '\x7a': 'SELECT_STRING6',
+    '\x77': NextMsgProc(4),
+    '\x78': NextMsgProc(5),
+    '\x79': SelectStringProc(5),
+    '\x7a': SelectStringProc(6),
 }
 
 
@@ -174,6 +165,7 @@ def decode_message(message):
             if special in SPECIAL_CODES:
                 special = SPECIAL_CODES[special]
 
+                # Check for instance of processor
                 if type(special) is not str:
                     proc = special
                     special = proc.process(message[i+2:])
