@@ -151,9 +151,6 @@ def decode_message(message):
         if len(set([c for c in message])) == 1:
             return '[%u FREE BYTES]' % (len(message))
 
-    # 0xCD: newline
-    message = message.replace('\xcd', '\n')
-
     msg_len = len(message)
     i = 0
     while i < msg_len:
@@ -181,6 +178,12 @@ def decode_message(message):
             continue
 
         i += 1
+
+    # 0xCD: newline
+    message = message.replace('\xcd', '\n')
+
+    # 0x90: m-dash
+    message = message.replace('\x90', '--')
 
     message = escape_string(message)
 
