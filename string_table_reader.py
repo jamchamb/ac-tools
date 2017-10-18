@@ -11,24 +11,29 @@ SPECIAL_CODES = {
     '\x00': 'LAST',
     '\x01': 'CONTINUE',
     '\x02': 'CLEAR',
-    # 0x03: PAUSE (aka SetTime)
+    '\x03': PauseProc(),  # PAUSE (aka SetTime)
     '\x04': 'BUTTON',
-    # 0x05: Color (whole line)
-    # 0x06: AbleCancel
-    # 0x07: UnableCancel
-    # 0x08: SetDemoOrderPlayer
-
-    # 0x09: ANIMATION (aka SetDemoOrderNpc0)
-    # 0x0A: SetDemoOrderNpc1
-    # 0x0B: SetDemoOrderNpc2
-    # 0x0C: SetDemoOrderNpc3
-
+    '\x05': ColorLineProc(),  # Color (whole line)
+    '\x06': 'ABLE_CANCEL',  # 0x06: AbleCancel
+    '\x07': 'UNABLE_CANCEL',  # 0x07: UnableCancel
+    '\x08': AnimationProc(0),  # 0x08: SetDemoOrderPlayer
+    '\x09': AnimationProc(1),  # 0x09: ANIMATION (aka SetDemoOrderNpc0)
+    '\x0a': AnimationProc(2),  # 0x0A: SetDemoOrderNpc1
+    '\x0b': AnimationProc(3),  # 0x0B: SetDemoOrderNpc2
+    '\x0c': AnimationProc(4),  # 0x0C: SetDemoOrderNpc3
     '\x0d': 'SELECT_WINDOW',  # aka SetSelectWindow
-    # 0x0e: GOTO_MESSAGE aka SetNextMessageF
+    '\x0e': GoToProc(),  # 0x0e: GOTO_MESSAGE aka SetNextMessageF
     # 0x0f - 0x12 OPTIONS, aka SetNextMessage(0 through 3)
+    '\x0f': NextMsgProc(0),
+    '\x10': NextMsgProc(1),
+    '\x11': NextMsgProc(2),
+    '\x12': NextMsgProc(3),
     # 0x13 - 0x15: SetNextMessageRandom(2 through 4)
     # 0x16 - 0x18: SetSelectString(2 through 4)
-    # 0x19: SetForceNext
+    '\x16': SelectStringProc(2),
+    '\x17': SelectStringProc(3),
+    '\x18': SelectStringProc(4),
+    '\x19': 'FORCE_NEXT',  # 0x19: SetForceNext
 
     '\x1a': 'PLAYER_NAME',
     '\x1b': 'TALK_NAME',
@@ -98,7 +103,7 @@ SPECIAL_CODES = {
     '\x4e': 'FUN',
     '\x4f': 'SLEEPY',
 
-    # 0x50 COLOR aka SetColorChar
+    '\x50': ColorCharProc(),  # 0x50 COLOR aka SetColorChar
     '\x51': 'SOUND',
     '\x52': 'LINE_OFFSET',
     '\x53': 'LINE_TYPE',
@@ -169,50 +174,10 @@ def decode_message(message):
             if special in SPECIAL_CODES:
                 special = SPECIAL_CODES[special]
 
-            # PAUSE
-            elif special == '\x03':
-                proc = PauseProc()
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # ANIMATION
-            elif special == '\x09':
-                proc = AnimationProc()
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # GOTO
-            elif special == '\x0e':
-                proc = GoToProc()
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # OPTION TRANSITIONS
-            elif ord(special) >= 0x0f and ord(special) <= 0x12:
-                index = ord(special) - 0x0f + 1
-                proc = NextMsgProc(index)
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # CHOICES
-            elif ord(special) >= 0x16 and ord(special) <= 0x18:
-                count = ord(special) - 0x14
-
-                proc = SelectStringProc(count)
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # COLOR (WHOLE LINE)
-            elif special == '\x05':
-                proc = ColorLineProc()
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
-
-            # COLOR (LENGTH)
-            elif special == '\x50':
-                proc = ColorCharProc()
-                special = proc.process(message[i+2:])
-                special_len = proc.size()
+                if type(special) is not str:
+                    proc = special
+                    special = proc.process(message[i+2:])
+                    special_len += proc.size()
 
             message = '%s[%s]%s' % (message[:i],
                                     special,

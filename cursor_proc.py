@@ -15,7 +15,7 @@ class CursorProc:
         return '%s:%s' % (self.name, data)
 
     def size(self):
-        return 2 + self._size
+        return self._size
 
 
 class PauseProc(CursorProc):
@@ -26,16 +26,21 @@ class PauseProc(CursorProc):
 
 
 class AnimationProc(CursorProc):
-    '''SetDemoOrderNpc0'''
+    '''SetDemoOrder(Player,Npc(0-3))'''
 
     name = 'ANIM'
     struct_format = '>L'
     output_format = '0x%02x'
 
-    def __init__(self):
+    def __init__(self, target):
         CursorProc.__init__(self)
         # Only 3 bytes are used to pack the int
         self._size = 3
+
+        if target == 0:
+            self.name += ':PLYR'
+        else:
+            self.name += ':NPC%u' % (target - 1)
 
     def unpack(self, msg_buffer):
         return self._struct.unpack_from('\x00' + msg_buffer[:self._size])
