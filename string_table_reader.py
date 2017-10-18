@@ -2,6 +2,8 @@
 import argparse
 import struct
 from utils import escape_string
+from cursor_proc import (PauseProc, AnimationProc, GoToProc, NextMsgProc,
+                         SelectStringProc, ColorLineProc, ColorCharProc)
 
 TABLE_ENT_STRUCT = struct.Struct('>I')
 
@@ -21,7 +23,7 @@ SPECIAL_CODES = {
     # 0x0B: SetDemoOrderNpc2
     # 0x0C: SetDemoOrderNpc3
 
-    '\x0d': 'SELECT',  # aka SetSelectWindow
+    '\x0d': 'SELECT_WINDOW',  # aka SetSelectWindow
     # 0x0e: GOTO_MESSAGE aka SetNextMessageF
     # 0x0f - 0x12 OPTIONS, aka SetNextMessage(0 through 3)
     # 0x13 - 0x15: SetNextMessageRandom(2 through 4)
@@ -169,52 +171,52 @@ def decode_message(message):
 
             # PAUSE
             elif special == '\x03':
-                special_len = 3
-                special = 'PAUSE:0x%02x' % (ord(message[i+2]))
+                proc = PauseProc()
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # ANIMATION
             elif special == '\x09':
-                special_len = 5
-                anim = struct.unpack('>L', '\x00'+message[i+2:i+2+3])[0]
-                special = 'ANIM:0x%02x' % (anim)
+                proc = AnimationProc()
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # GOTO
             elif special == '\x0e':
-                special_len = 4
-                target = struct.unpack('>H', message[i+2:i+2+2])[0]
-                special = 'GOTO:0x%04x' % (target)
+                proc = GoToProc()
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # OPTION TRANSITIONS
             elif ord(special) >= 0x0f and ord(special) <= 0x12:
-                special_len = 4
                 index = ord(special) - 0x0f + 1
-                target = struct.unpack('>H', message[i+2:i+2+2])[0]
-                special = 'OPT%u:0x%04x' % (index, target)
+                proc = NextMsgProc(index)
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # CHOICES
             elif ord(special) >= 0x16 and ord(special) <= 0x18:
                 count = ord(special) - 0x14
 
-                special_len = 2 + (2 * count)
-                choices = struct.unpack('>' + 'H'*count, message[i+2:i+2+(2 * count)])
-                special = 'CHOICES:'
-                for choice in choices:
-                    special += '%04x,' % (choice)
+                proc = SelectStringProc(count)
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # COLOR (WHOLE LINE)
             elif special == '\x05':
-                special_len = 5
-                color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
-                special = 'COLOR:%06x' % (color)
+                proc = ColorLineProc()
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
             # COLOR (LENGTH)
             elif special == '\x50':
-                special_len = 6
-                color = struct.unpack('>I', '\x00'+message[i+2:i+2+3])[0]
-                length = struct.unpack('>B', message[i+2+3])[0]
-                special = 'COLOR:%06x:%02x' % (color, length)
+                proc = ColorCharProc()
+                special = proc.process(message[i+2:])
+                special_len = proc.size()
 
-            message = '%s[%s]%s' % (message[:i], special, message[i+special_len:])
+            message = '%s[%s]%s' % (message[:i],
+                                    special,
+                                    message[i+special_len:])
 
             # Adjust message length and position
             msg_len = len(message)
