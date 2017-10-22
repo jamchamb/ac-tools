@@ -21,7 +21,7 @@ SPECIAL_CODES = {
     '\x09': AnimationProc(1),  # 0x09: ANIMATION (aka SetDemoOrderNpc0)
     '\x0a': AnimationProc(2),  # 0x0A: SetDemoOrderNpc1
     '\x0b': AnimationProc(3),  # 0x0B: SetDemoOrderNpc2
-    '\x0c': AnimationProc(4),  # 0x0C: SetDemoOrderNpc3
+    '\x0c': AnimationProc(4),  # 0x0C: SetDemoOrderQuest
     '\x0d': 'SELECT_WINDOW',  # aka SetSelectWindow
     '\x0e': GoToProc(),  # 0x0e: GOTO_MESSAGE aka SetNextMessageF
     # 0x0f - 0x12 OPTIONS, aka SetNextMessage(0 through 3)
