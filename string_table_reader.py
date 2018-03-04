@@ -95,9 +95,9 @@ SPECIAL_CODES = {
     '\x4e': 'FUN',
     '\x4f': 'SLEEPY',
     '\x50': ColorCharProc(),  # 0x50 COLOR aka SetColorChar
-    '\x51': 'SOUND',
-    '\x52': 'LINE_OFFSET',
-    '\x53': 'LINE_TYPE',
+    '\x51': 'SOUND_CUT',  # TODO: data byte 
+    '\x52': 'LINE_OFFSET',  # TODO: data byte
+    '\x53': 'LINE_TYPE',  # TODO: data byte
     '\x54': CharScaleProc(),
     '\x55': 'BUTTON2',
     '\x56': 'BGM_MAKE',
